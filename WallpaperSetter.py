@@ -1,10 +1,8 @@
 # Wallpaper Setter
 # Created by James Robinson (https://github.com/JamesRobinson160552)
-# Last updated 29/05/2024
+# Last updated 04/06/2024
 
 #TODO: 
-# Add image padding and resizing
-# -> set based on screen size
 # Add UI
 # -> Buttons to login, download latest, change wallpaper
 # Package as executable
