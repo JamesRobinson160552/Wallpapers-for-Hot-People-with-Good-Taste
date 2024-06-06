@@ -67,12 +67,16 @@ def resize_image(image_path, new_width, new_height):
     image = image.crop((left, top, right, bottom))
     image.save(image_path)
 
-app = tk.Tk()
+app = tk.Tk(className="WallpaperSetter")
 screen_width, screen_height = app.maxsize()
 print ("Terminal size: " + str(screen_width) + "x" + str(screen_height))
 
-get_auth()
-download_images()
-for image in os.listdir("./images"):
-    resize_image("./images/" + image, screen_width - 350, screen_height - 350)
-set_wallpaper()
+SignInButton = tk.Button(app, text="Sign In", command=get_auth)
+GetImagesButton = tk.Button(app, text="Get Images", command=download_images)
+SetWallpaperButton = tk.Button(app, text="Set Wallpaper", command=set_wallpaper)
+
+SignInButton.pack()
+GetImagesButton.pack()
+SetWallpaperButton.pack()
+
+app.mainloop()
