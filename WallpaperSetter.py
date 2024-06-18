@@ -3,8 +3,7 @@
 # Last updated 04/06/2024
 
 #TODO: 
-# Add UI
-# -> Buttons to login, download latest, change wallpaper
+# Improve UI
 # Package as executable
 
 import ctypes #to process image
@@ -32,8 +31,11 @@ def download_images():
     results = get_auth().current_user_saved_albums()
     for item in enumerate(results['items']):
         image_data = requests.get(item[1]['album']['images'][0]['url']).content
-        with open("./images/" + item[1]['album']['name'] + '.jpg', 'wb') as handler:
+        with open((IMAGE_DIRECTORY + item[1]['album']['name'] + '.jpg').replace(" ", "_").replace("?", ""), 'wb') as handler:
             handler.write(image_data)
+    
+    for image in os.listdir(IMAGE_DIRECTORY):
+        resize_image(IMAGE_DIRECTORY + image, screen_width, screen_height)
 
 #Set wallpaper as one of the downloaded images
 def set_wallpaper():
@@ -41,8 +43,7 @@ def set_wallpaper():
     Get a random image from the images folder
     Set the image as the desktop wallpaper
     """
-    directory = os.getcwd() + "\\images\\"
-    wallpaper_path = directory + random.choice(os.listdir(directory))
+    wallpaper_path = IMAGE_DIRECTORY + random.choice(os.listdir(IMAGE_DIRECTORY))
 
     SPI_SETDESKWALLPAPER = 20
     image = ctypes.c_wchar_p(wallpaper_path)
@@ -67,6 +68,12 @@ def resize_image(image_path, new_width, new_height):
     image = image.crop((left, top, right, bottom))
     image.save(image_path)
 
+#Create image directory if it doesn't exist
+IMAGE_DIRECTORY = os.getcwd() + "\\images\\"
+if not os.path.exists(IMAGE_DIRECTORY):
+    os.makedirs(IMAGE_DIRECTORY)
+
+#Create TKinter GUI
 app = tk.Tk(className="WallpaperSetter")
 screen_width, screen_height = app.maxsize()
 print ("Terminal size: " + str(screen_width) + "x" + str(screen_height))
@@ -79,4 +86,5 @@ SignInButton.pack()
 GetImagesButton.pack()
 SetWallpaperButton.pack()
 
+#Run GUI
 app.mainloop()
