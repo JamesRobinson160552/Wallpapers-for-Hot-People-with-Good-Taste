@@ -1,10 +1,9 @@
 # Wallpaper Setter
 # Created by James Robinson (https://github.com/JamesRobinson160552)
-# Last updated 04/06/2024
+# Last updated 04/19/2024
 
 #TODO: 
 # Improve UI
-# Package as executable
 
 import ctypes #to process image
 import os #to save images
@@ -60,10 +59,10 @@ def resize_image(image_path, new_width, new_height):
     image = Image.open(image_path)
     width, height = image.size
 
-    left = (width - new_width)/2
-    top = (height - new_height)/2
-    right = (width + new_width)/2
-    bottom = (height + new_height)/2
+    left = (width - new_width)/2 - 200
+    right = (width + new_width)/2 + 200
+    top = (height - new_height)/2 + 200
+    bottom = (height + new_height)/2 - 200
 
     image = image.crop((left, top, right, bottom))
     image.save(image_path)
@@ -75,16 +74,20 @@ if not os.path.exists(IMAGE_DIRECTORY):
 
 #Create TKinter GUI
 app = tk.Tk(className="WallpaperSetter")
-screen_width, screen_height = app.maxsize()
-print ("Terminal size: " + str(screen_width) + "x" + str(screen_height))
+screen_width, screen_height = app.maxsize() #Get screen size with max application size
+app.geometry(str(int(screen_width/2)) + "x" + str(int(screen_height/2))) #Window resize
+#print ("Terminal size: " + str(screen_width) + "x" + str(screen_height))
+
+title = tk.Label(app, text="Wallpapers for Hot People with Good Taste")
+title.grid(column=1, row=0)
 
 SignInButton = tk.Button(app, text="Sign In", command=get_auth)
 GetImagesButton = tk.Button(app, text="Get Images", command=download_images)
 SetWallpaperButton = tk.Button(app, text="Set Wallpaper", command=set_wallpaper)
 
-SignInButton.pack()
-GetImagesButton.pack()
-SetWallpaperButton.pack()
+SignInButton.grid(column=1, row=1)
+GetImagesButton.grid(column=2, row=1)
+SetWallpaperButton.grid(column=3, row=1)
 
 #Run GUI
 app.mainloop()
