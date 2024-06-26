@@ -1,9 +1,12 @@
 # Wallpaper Setter
 # Created by James Robinson (https://github.com/JamesRobinson160552)
-# Last updated 04/19/2024
+# Last updated 06/26/2024
 
 #TODO: 
 # Improve UI
+# Add ability to increase/decrease size
+# Bugs:
+#   Wallpaper does not persist after restart
 
 import ctypes #to process image
 import os #to save images
@@ -18,14 +21,17 @@ load_dotenv()
 
 #Access the user's spotify account
 def get_auth():
+    """
+    Prompts user to authorize library access via default browser
+    """
     scope = "user-library-read"
     return spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 #Fetch user's saved album covers and download
 def download_images():
     """
-    Use Spotify API to fetch user's saved album covers
-    Download all images to the images folder
+    Uses Spotify API to fetch user's saved album covers
+    Downloads all images to the images folder
     """
     results = get_auth().current_user_saved_albums()
     for item in enumerate(results['items']):
@@ -34,13 +40,13 @@ def download_images():
             handler.write(image_data)
     
     for image in os.listdir(IMAGE_DIRECTORY):
-        resize_image(IMAGE_DIRECTORY + image, screen_width, screen_height)
+        resize_image(IMAGE_DIRECTORY + image, screen_width/1.5, screen_height/1.5)
 
 #Set wallpaper as one of the downloaded images
 def set_wallpaper():
     """
-    Get a random image from the images folder
-    Set the image as the desktop wallpaper
+    Gets a random image from the images folder
+    Sets the image as the desktop wallpaper
     """
     wallpaper_path = IMAGE_DIRECTORY + random.choice(os.listdir(IMAGE_DIRECTORY))
 
@@ -52,17 +58,17 @@ def set_wallpaper():
 #Make image fit display
 def resize_image(image_path, new_width, new_height):
     """
-    Resize image to fit display
+    Resizes an image to fit display
     Note: in this case, cropping adds blackspace hence 'bigger' sizes will make
     the image appear smaller
     """
     image = Image.open(image_path)
     width, height = image.size
 
-    left = (width - new_width)/2 - 200
-    right = (width + new_width)/2 + 200
-    top = (height - new_height)/2 + 200
-    bottom = (height + new_height)/2 - 200
+    left = (width - new_width)/2
+    right = (width + new_width)/2
+    top = (height - new_height)/2
+    bottom = (height + new_height)/2
 
     image = image.crop((left, top, right, bottom))
     image.save(image_path)
@@ -76,18 +82,25 @@ if not os.path.exists(IMAGE_DIRECTORY):
 app = tk.Tk(className="WallpaperSetter")
 screen_width, screen_height = app.maxsize() #Get screen size with max application size
 app.geometry(str(int(screen_width/2)) + "x" + str(int(screen_height/2))) #Window resize
-#print ("Terminal size: " + str(screen_width) + "x" + str(screen_height))
+app.configure(background='black')
 
 title = tk.Label(app, text="Wallpapers for Hot People with Good Taste")
-title.grid(column=1, row=0)
+title.configure(background='black', foreground='green', font='sans 20 bold')
+title.pack(side=tk.TOP, pady=20)
 
-SignInButton = tk.Button(app, text="Sign In", command=get_auth)
-GetImagesButton = tk.Button(app, text="Get Images", command=download_images)
-SetWallpaperButton = tk.Button(app, text="Set Wallpaper", command=set_wallpaper)
+ButtonBorder = tk.Frame(app, background='green')
+ButtonBorder.pack(side=tk.TOP, pady=100, padx=100,fill=tk.BOTH)
 
-SignInButton.grid(column=1, row=1)
-GetImagesButton.grid(column=2, row=1)
-SetWallpaperButton.grid(column=3, row=1)
+ButtonMenu = tk.Frame(ButtonBorder, background='gray')
+ButtonMenu.pack(side=tk.TOP, pady=5, padx=5, fill=tk.BOTH)
+
+SignInButton = tk.Button(ButtonMenu, text="Sign In", command=get_auth)
+GetImagesButton = tk.Button(ButtonMenu, text="Get Images", command=download_images)
+SetWallpaperButton = tk.Button(ButtonMenu, text="Set Wallpaper", command=set_wallpaper)
+
+SignInButton.pack(side=tk.TOP, padx=200, pady=25)
+GetImagesButton.pack(side=tk.TOP, padx=200, pady=25)
+SetWallpaperButton.pack(side=tk.TOP, padx=200, pady=25)
 
 #Run GUI
 app.mainloop()
