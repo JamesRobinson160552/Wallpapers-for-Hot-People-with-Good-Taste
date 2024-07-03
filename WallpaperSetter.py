@@ -14,6 +14,8 @@ import requests #to download images
 import random #to pick random image
 from PIL import Image #to resize image
 import tkinter as tk #to create GUI
+import tkinter.ttk as ttk
+from tkinter.ttk import Style
 import spotipy #to access spotify
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv #to store spotify api credentials
@@ -40,7 +42,7 @@ def download_images():
             handler.write(image_data)
     
     for image in os.listdir(IMAGE_DIRECTORY):
-        resize_image(IMAGE_DIRECTORY + image, screen_width/1.5, screen_height/1.5)
+        resize_image(IMAGE_DIRECTORY + image, screen_width, screen_height/1.5)
 
 #Set wallpaper as one of the downloaded images
 def set_wallpaper():
@@ -81,26 +83,34 @@ if not os.path.exists(IMAGE_DIRECTORY):
 #Create TKinter GUI
 app = tk.Tk(className="WallpaperSetter")
 screen_width, screen_height = app.maxsize() #Get screen size with max application size
-app.geometry(str(int(screen_width/2)) + "x" + str(int(screen_height/2))) #Window resize
+app.geometry("800x400") #Window resize
+app.resizable(width=False, height=False)
 app.configure(background='black')
 
 title = tk.Label(app, text="Wallpapers for Hot People with Good Taste")
-title.configure(background='black', foreground='green', font='sans 20 bold')
+title.configure(background='black', foreground='green', font='sans 28 bold')
 title.pack(side=tk.TOP, pady=20)
 
 ButtonBorder = tk.Frame(app, background='green')
-ButtonBorder.pack(side=tk.TOP, pady=100, padx=100,fill=tk.BOTH)
+ButtonBorder.pack(side=tk.TOP, pady=20, padx=100,fill=tk.BOTH)
 
 ButtonMenu = tk.Frame(ButtonBorder, background='gray')
-ButtonMenu.pack(side=tk.TOP, pady=5, padx=5, fill=tk.BOTH)
+ButtonMenu.pack(side=tk.TOP, pady=10, padx=10, fill=tk.BOTH)
 
-SignInButton = tk.Button(ButtonMenu, text="Sign In", command=get_auth)
-GetImagesButton = tk.Button(ButtonMenu, text="Get Images", command=download_images)
-SetWallpaperButton = tk.Button(ButtonMenu, text="Set Wallpaper", command=set_wallpaper)
+style = Style()
+style.configure('W.TButton', 
+                font=('calibri', 20, 'bold'),
+                background='green',
+                foreground='green'
+                )
 
-SignInButton.pack(side=tk.TOP, padx=200, pady=25)
-GetImagesButton.pack(side=tk.TOP, padx=200, pady=25)
-SetWallpaperButton.pack(side=tk.TOP, padx=200, pady=25)
+SignInButton = ttk.Button(ButtonMenu, text="Sign In", command=get_auth, style='W.TButton')
+GetImagesButton = ttk.Button(ButtonMenu, text="Get Images", command=download_images, style='W.TButton')
+SetWallpaperButton = ttk.Button(ButtonMenu, text="Set Wallpaper", command=set_wallpaper, style='W.TButton')
+
+SignInButton.pack(side=tk.TOP, ipadx=200, ipady=10, padx=20, pady=8)
+GetImagesButton.pack(side=tk.TOP, ipadx=200, ipady=10, padx=20, pady=8)
+SetWallpaperButton.pack(side=tk.TOP, ipadx=200, ipady=10, padx=20, pady=8)
 
 #Run GUI
 app.mainloop()
