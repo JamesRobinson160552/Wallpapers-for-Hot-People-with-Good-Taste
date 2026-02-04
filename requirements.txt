@@ -1,0 +1,4 @@
+requests #to download images
+spotipy #to access spotify
+pillow
+dotenv

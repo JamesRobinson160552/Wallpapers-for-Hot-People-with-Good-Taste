@@ -9,6 +9,7 @@
 #   Wallpaper does not persist after restart
 
 import ctypes #to process image
+from ctypes import wintypes
 import os #to save images
 import requests #to download images
 import random #to pick random image
@@ -35,14 +36,41 @@ def download_images():
     Uses Spotify API to fetch user's saved album covers
     Downloads all images to the images folder
     """
-    results = get_auth().current_user_saved_albums()
-    for item in enumerate(results['items']):
-        image_data = requests.get(item[1]['album']['images'][0]['url']).content
-        with open((IMAGE_DIRECTORY + item[1]['album']['name'] + '.jpg').replace(" ", "_").replace("?", ""), 'wb') as handler:
-            handler.write(image_data)
+    sp = get_auth()
+    limit = 50  # Spotify max page size
+    offset = 0
+
+    while True:
+        results = sp.current_user_saved_albums(limit=limit, offset=offset)
+        items = results.get('items', [])
+        if not items:
+            break
+
+        for item in items:
+            try:
+                url = item['album']['images'][0]['url']
+            except (KeyError, IndexError):
+                continue
+
+            name = item['album'].get('name', 'unknown')
+            safe_name = name.replace('.', '_').replace('>', '').replace('<', '').replace(':', '').replace('"', '').replace('/', '_').replace('\\', '_').replace('|', "_").replace('?', '').replace('*', 'x')
+            image_path = IMAGE_DIRECTORY + safe_name + '.jpg'
+
+            # Avoid re-downloading if we already have the file
+            if os.path.exists(image_path):
+                continue
+
+            image_data = requests.get(url).content
+            with open(image_path, 'wb') as handler:
+                handler.write(image_data)
+
+        offset += len(items)
     
     for image in os.listdir(IMAGE_DIRECTORY):
-        resize_image(IMAGE_DIRECTORY + image, screen_width, screen_height/1.5)
+        # Only process common image files
+        if not image.lower().endswith(('.jpg', '.jpeg', '.png')):
+            continue
+        resize_image(os.path.join(IMAGE_DIRECTORY, image), screen_width, screen_height)
 
 #Set wallpaper as one of the downloaded images
 def set_wallpaper():
@@ -60,20 +88,38 @@ def set_wallpaper():
 #Make image fit display
 def resize_image(image_path, new_width, new_height):
     """
-    Resizes an image to fit display
-    Note: in this case, cropping adds blackspace hence 'bigger' sizes will make
-    the image appear smaller
+    Resize an image to fit within (new_width, new_height) while preserving
+    aspect ratio.
     """
-    image = Image.open(image_path)
-    width, height = image.size
+    image = Image.open(image_path).convert('RGB')
+    new_width = int(new_width)
+    new_height = int(new_height)
 
-    left = (width - new_width)/2
-    right = (width + new_width)/2
-    top = (height - new_height)/2
-    bottom = (height + new_height)/2
+    src_w, src_h = image.size
+    if src_w == 0 or src_h == 0:
+        return
 
-    image = image.crop((left, top, right, bottom))
-    image.save(image_path)
+    src_ratio = src_w / src_h
+    target_ratio = new_width / new_height
+
+    # Determine scaled size to 'contain' the image inside the target box
+    if src_ratio > target_ratio:
+        # Image is wider than target -> fit to width
+        scaled_w = new_width
+        scaled_h = round(new_width / src_ratio)
+    else:
+        # Image is taller (or equal) -> fit to height
+        scaled_h = new_height
+        scaled_w = round(new_height * src_ratio)
+
+    image = image.resize((scaled_w, scaled_h), Image.LANCZOS)
+
+    # Create background and paste centered to avoid cropping/zoom
+    background = Image.new('RGB', (new_width, new_height), (0, 0, 0))
+    offset_x = (new_width - scaled_w) // 2
+    offset_y = (new_height - scaled_h) // 2
+    background.paste(image, (offset_x, offset_y))
+    background.save(image_path, quality=95)
 
 #Create image directory if it doesn't exist
 IMAGE_DIRECTORY = os.getcwd() + "\\images\\"
@@ -82,7 +128,20 @@ if not os.path.exists(IMAGE_DIRECTORY):
 
 #Create TKinter GUI
 app = tk.Tk(className="WallpaperSetter")
-screen_width, screen_height = app.maxsize() #Get screen size with max application size
+
+# Get the usable work area (excludes taskbar)
+def get_work_area():
+    try:
+        SPI_GETWORKAREA = 0x0030
+        rect = wintypes.RECT()
+        ctypes.windll.user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(rect), 0)
+        width = rect.right - rect.left
+        height = rect.bottom - rect.top
+        return width, height
+    except Exception:
+        return app.maxsize()
+
+screen_width, screen_height = get_work_area() #Get screen size excluding taskbar
 app.geometry("800x400") #Window resize
 app.resizable(width=False, height=False)
 app.configure(background='black')
